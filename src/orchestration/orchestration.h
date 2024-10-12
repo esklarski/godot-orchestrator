@@ -68,6 +68,7 @@ protected:
     HashMap<StringName, Ref<OScriptFunction>> _functions;  //! Map of all orchestration functions
     HashMap<StringName, Ref<OScriptVariable>> _variables;  //! Map of all orchestration variables
     HashMap<StringName, Ref<OScriptSignal>> _signals;      //! Map of all user-defined signals
+    HashMap<StringName, Ref<OScriptSignal>> _events;       //! Map of all user-defined custom events
     HashMap<StringName, Ref<OScriptGraph>> _graphs;        //! Map of all defined graphs
     Resource* _self;                                       //! Reference to the outer resource type
     uint32_t _version{ 0 };                                //! Orchestration version
@@ -84,7 +85,9 @@ protected:
     TypedArray<OScriptVariable> _get_variables_internal() const;
     void _set_variables_internal(const TypedArray<OScriptVariable>& p_variables);
     TypedArray<OScriptSignal> _get_signals_internal() const;
-    void _set_signals_internal(const TypedArray<OScriptSignal>& p_signals);
+    void _set_signals_internal(const TypedArray<OScriptSignal>& p_events);
+    TypedArray<OScriptSignal> _get_events_internal() const;
+    void _set_events_internal(const TypedArray<OScriptSignal>& p_events);
     //~ End Serialization Interface
 
     /// Fixes any potential orphan nodes in the script
@@ -228,6 +231,18 @@ public:
     PackedStringArray get_custom_signal_names() const;
     bool can_remove_custom_signal(const StringName& p_name) const;
     //~ End Signals Interface
+
+    //~ Begin Events Interface
+    bool has_custom_event(const StringName& p_name) const;
+    Ref<OScriptSignal> create_custom_event(const StringName& p_name);
+    void remove_custom_event(const StringName& p_name);
+    Ref<OScriptSignal> get_custom_event(const StringName& p_name);
+    Ref<OScriptSignal> find_custom_event(const StringName& p_name) const;
+    bool rename_custom_user_event(const StringName& p_old_name, const StringName& p_new_name);
+    Vector<Ref<OScriptSignal>> get_custom_events() const;
+    PackedStringArray get_custom_event_names() const;
+    bool can_remove_custom_event(const StringName& p_name) const;
+    //~ End Events Interface
 
     /// Constructs the orchestration for the specified object
     /// @param p_self the owner object

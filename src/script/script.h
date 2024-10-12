@@ -70,6 +70,8 @@ protected:
     void _set_variables(const TypedArray<OScriptVariable>& p_variables) { _set_variables_internal(p_variables); }
     TypedArray<OScriptSignal> _get_signals() const { return _get_signals_internal(); }
     void _set_signals(const TypedArray<OScriptSignal>& p_signals) { _set_signals_internal(p_signals); }
+    TypedArray<OScriptSignal> _get_events() const { return _get_events_internal(); }
+    void _set_events(const TypedArray<OScriptSignal>& p_events) { _set_events_internal(p_events); }
     //~ End Serialization API
 
     /// Updates the exported values
@@ -119,6 +121,8 @@ public:
     ScriptLanguage* _get_language() const override;
     bool _has_script_signal(const StringName& p_signal) const override;
     TypedArray<Dictionary> _get_script_signal_list() const override;
+    bool _has_script_event(const StringName& p_event) const;
+    TypedArray<Dictionary> _get_script_event_list() const;
     bool _has_property_default_value(const StringName& p_property) const override;
     Variant _get_property_default_value(const StringName& p_property) const override;
     void _update_exports() override;

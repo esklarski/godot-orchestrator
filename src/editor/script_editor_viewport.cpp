@@ -22,6 +22,7 @@
 #include "editor/component_panels/graphs_panel.h"
 #include "editor/component_panels/macros_panel.h"
 #include "editor/component_panels/signals_panel.h"
+#include "editor/component_panels/custom_events_panel.h"
 #include "editor/component_panels/variables_panel.h"
 #include "editor/graph/graph_edit.h"
 #include "plugins/orchestrator_editor_plugin.h"
@@ -39,6 +40,7 @@ void OrchestratorScriptEditorViewport::_update_components()
     _macros->update();
     _variables->update();
     _signals->update();
+    _events->update();
 }
 
 bool OrchestratorScriptEditorViewport::_can_graph_be_closed(OrchestratorGraphEdit* p_graph)
@@ -97,6 +99,7 @@ void OrchestratorScriptEditorViewport::_save_state()
         panel_states["macros"] = _macros->is_collapsed();
         panel_states["variables"] = _variables->is_collapsed();
         panel_states["signals"] = _signals->is_collapsed();
+        panel_states["events"] = _events->is_collapsed();
 
         cache->set_script_state(_orchestration->get_self()->get_path(), state);
         cache->save();
@@ -141,6 +144,7 @@ void OrchestratorScriptEditorViewport::_restore_state()
             _macros->set_collapsed(panel_state.get("macros", false));
             _variables->set_collapsed(panel_state.get("variables", false));
             _signals->set_collapsed(panel_state.get("signals", false));
+            _events->set_collapsed(panel_state.get("events", false));
         }
     }
 }
@@ -581,6 +585,10 @@ void OrchestratorScriptEditorViewport::_notification(int p_what)
         _signals = memnew(OrchestratorScriptSignalsComponentPanel(_orchestration));
         _signals->connect("scroll_to_item", callable_mp(this, &OrchestratorScriptEditorViewport::_scroll_to_item));
         _component_container->add_child(_signals);
+
+        _events = memnew(OrchestratorScriptCustomEventsComponentPanel(_orchestration));
+        _events->connect("scroll_to_item", callable_mp(this, &OrchestratorScriptEditorViewport::_scroll_to_item));
+        _component_container->add_child(_events);
 
         // Always open the event graph
         _event_graph = _get_or_create_tab(EVENT_GRAPH_NAME);

@@ -59,6 +59,11 @@ void OScript::_bind_methods()
     ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "signals", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE),
                  "_set_signals", "_get_signals");
 
+    ClassDB::bind_method(D_METHOD("_set_events", "events"), &OScript::_set_events);
+    ClassDB::bind_method(D_METHOD("_get_events"), &OScript::_get_events);
+    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "events", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE),
+                 "_set_events", "_get_events");
+
     ClassDB::bind_method(D_METHOD("_set_connections", "connections"), &OScript::_set_connections);
     ClassDB::bind_method(D_METHOD("_get_connections"), &OScript::_get_connections);
     ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "connections", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE),
@@ -78,6 +83,7 @@ void OScript::_bind_methods()
     ADD_SIGNAL(MethodInfo("functions_changed"));
     ADD_SIGNAL(MethodInfo("variables_changed"));
     ADD_SIGNAL(MethodInfo("signals_changed"));
+    ADD_SIGNAL(MethodInfo("events_changed"));
 }
 
 /// ScriptExtension ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -274,6 +280,21 @@ TypedArray<Dictionary> OScript::_get_script_signal_list() const
     TypedArray<Dictionary> list;
 
     for (const KeyValue<StringName, Ref<OScriptSignal>>& E : _signals)
+        list.push_back(DictionaryUtils::from_method(E.value->get_method_info()));
+
+    return list;
+}
+
+bool OScript::_has_script_event(const StringName& p_signal) const
+{
+    return has_custom_event(p_signal);
+}
+
+TypedArray<Dictionary> OScript::_get_script_event_list() const
+{
+    TypedArray<Dictionary> list;
+
+    for (const KeyValue<StringName, Ref<OScriptSignal>>& E : _events)
         list.push_back(DictionaryUtils::from_method(E.value->get_method_info()));
 
     return list;

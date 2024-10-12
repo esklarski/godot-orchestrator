@@ -149,6 +149,25 @@ void Orchestration::_set_signals_internal(const TypedArray<OScriptSignal>& p_sig
     }
 }
 
+TypedArray<OScriptSignal> Orchestration::_get_events_internal() const
+{
+    TypedArray<OScriptSignal> signals;
+    for (const KeyValue<StringName, Ref<OScriptSignal>>& E : _events)
+        signals.push_back(E.value);
+    return signals;
+}
+
+void Orchestration::_set_events_internal(const TypedArray<OScriptSignal>& p_events)
+{
+    _events.clear();
+    for (int i = 0; i < p_events.size(); i++)
+    {
+        Ref<OScriptSignal> signal = p_events[i];
+        signal->_orchestration = this;
+        _events[signal->get_signal_name()] = signal;
+    }
+}
+
 void Orchestration::_fix_orphans()
 {
     // Iterate nodes and check orphan status
@@ -609,6 +628,7 @@ Ref<OScriptFunction> Orchestration::create_function(const MethodInfo& p_method, 
     ERR_FAIL_COND_V_MSG(_functions.has(p_method.name), nullptr, "A function already exists with the name: " + p_method.name);
     ERR_FAIL_COND_V_MSG(_variables.has(p_method.name), nullptr, "A variable already exists with the name: " + p_method.name);
     ERR_FAIL_COND_V_MSG(_signals.has(p_method.name), nullptr, "A signal already exists with the name: " + p_method.name);
+    ERR_FAIL_COND_V_MSG(_events.has(p_method.name), nullptr, "An event already exists with the name: " + p_method.name);
 
     Ref<OScriptFunction> function(memnew(OScriptFunction));
     function->_orchestration = this;
@@ -954,6 +974,117 @@ PackedStringArray Orchestration::get_custom_signal_names() const
 }
 
 bool Orchestration::can_remove_custom_signal(const StringName& p_name) const
+{
+    for (const KeyValue<int, Ref<OScriptNode>>& E : _nodes)
+    {
+        const Ref<OScriptNodeEmitSignal> emit_signal_node = E.value;
+        if (emit_signal_node.is_valid() && emit_signal_node->get_signal()->get_signal_name().match(p_name))
+            return false;
+    }
+    return true;
+}
+
+bool Orchestration::has_custom_event(const StringName& p_name) const
+{
+    return _events.has(p_name);
+}
+
+Ref<OScriptSignal> Orchestration::create_custom_event(const StringName& p_name)
+{
+    ERR_FAIL_COND_V_MSG(has_custom_event(p_name), nullptr, "A custom event already exists with the name: " + p_name);
+    ERR_FAIL_COND_V_MSG(!p_name.is_valid_identifier(), nullptr, "The name is not a valid event name.");
+
+    MethodInfo method;
+    method.name = p_name;
+    // Fixed by https://github.com/godotengine/godot-cpp/pull/1440
+    method.return_val.usage = PROPERTY_USAGE_DEFAULT;
+
+    Ref<OScriptSignal> signal(memnew(OScriptSignal));
+    signal->_orchestration = this;
+    signal->_method = method;
+
+    _events[p_name] = signal;
+
+    // TODO:
+    _self->emit_signal("events_changed");
+
+    return signal;
+}
+
+void Orchestration::remove_custom_event(const StringName& p_name)
+{
+    ERR_FAIL_COND_MSG(!has_custom_signal(p_name), "No event exists with the name: " + p_name);
+
+    const List<int> node_ids = _get_node_type_node_ids<OScriptNodeEmitSignal>();
+    for (int node_id : node_ids)
+    {
+        const Ref<OScriptNodeEmitSignal> signal = get_node(node_id);
+        if (signal.is_valid() && signal->get_signal()->get_signal_name().match(p_name))
+            remove_node(node_id);
+    }
+
+    _events.erase(p_name);
+
+    // TODO:
+    _self->emit_signal("events_changed");
+}
+
+Ref<OScriptSignal> Orchestration::get_custom_event(const StringName& p_name)
+{
+    ERR_FAIL_COND_V_MSG(!has_custom_event(p_name), nullptr, "No custom event exists with name " + p_name);
+    return _events[p_name];
+}
+
+Ref<OScriptSignal> Orchestration::find_custom_event(const StringName& p_name) const
+{
+    return has_custom_event(p_name) ? _events[p_name] : nullptr;
+}
+
+bool Orchestration::rename_custom_user_event(const StringName& p_old_name, const StringName& p_new_name)
+{
+    if (p_old_name == p_new_name)
+        return false;
+
+    ERR_FAIL_COND_V_MSG(_has_instances(), false, "Cannot rename custom event, instances exist.");
+    ERR_FAIL_COND_V_MSG(!has_custom_event(p_old_name), false, "No custom event exists with the old name: " + p_old_name);
+    ERR_FAIL_COND_V_MSG(has_custom_event(p_new_name), false, "A custom event already exists with the new name: " + p_new_name);
+    ERR_FAIL_COND_V_MSG(!String(p_new_name).is_valid_identifier(), false, "The custom event name is invalid: " + p_new_name);
+
+    const Ref<OScriptSignal> signal = find_custom_event(p_old_name);
+    signal->rename(p_new_name);
+
+    _events[p_new_name] = signal;
+    _events.erase(p_old_name);
+
+    // TODO:
+    _self->emit_signal("events_changed");
+    _self->emit_changed();
+    _self->notify_property_list_changed();
+
+    #ifdef TOOLS_ENABLED
+    _update_placeholders();
+    #endif
+
+    return true;
+}
+
+Vector<Ref<OScriptSignal>> Orchestration::get_custom_events() const
+{
+    Vector<Ref<OScriptSignal>> results;
+    for (const KeyValue<StringName, Ref<OScriptSignal>>& E : _events)
+        results.push_back(E.value);
+    return results;
+}
+
+PackedStringArray Orchestration::get_custom_event_names() const
+{
+    PackedStringArray names;
+    for (const KeyValue<StringName, Ref<OScriptSignal>>& E : _events)
+        names.push_back(E.key);
+    return names;
+}
+
+bool Orchestration::can_remove_custom_event(const StringName& p_name) const
 {
     for (const KeyValue<int, Ref<OScriptNode>>& E : _nodes)
     {

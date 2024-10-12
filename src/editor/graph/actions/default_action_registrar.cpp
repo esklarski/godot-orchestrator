@@ -749,6 +749,33 @@ void OrchestratorDefaultGraphActionRegistrar::_register_orchestration_signals()
     }
 }
 
+void OrchestratorDefaultGraphActionRegistrar::_register_orchestration_events()
+{
+    OrchestratorGraphActionSpec signals_spec;
+    signals_spec.category = "emit_signals";
+    signals_spec.tooltip = "Signals defined within the orchestration.";
+    signals_spec.text = "emit_signals";
+    signals_spec.keywords = "signal,signals";
+    signals_spec.icon = "MemberSignal";
+    signals_spec.type_icon = "MemberSignal";
+    _context->list->push_back(memnew(OrchestratorGraphActionMenuItem(signals_spec)));
+
+    if (OrchestratorGraphEdit* graph = _context->graph)
+    {
+        Orchestration* orchestration = graph->get_owning_graph()->get_orchestration();
+        for (const Ref<OScriptSignal>& signal : orchestration->get_custom_events())
+        {
+            if (!signal.is_valid())
+                continue;
+
+            const OrchestratorGraphActionSpec spec = _get_signal_spec(signal->get_signal_name(), orchestration->get_base_type());
+
+            Ref<OrchestratorGraphActionHandler> handler(memnew(OrchestratorGraphNodeSpawnerEmitSignal(signal->get_method_info())));
+            _context->list->push_back(memnew(OrchestratorGraphActionMenuItem(spec, handler)));
+        }
+    }
+}
+
 void OrchestratorDefaultGraphActionRegistrar::register_actions(const OrchestratorGraphActionRegistrarContext& p_context)
 {
     OrchestratorSettings* settings = OrchestratorSettings::get_singleton();
@@ -835,4 +862,5 @@ void OrchestratorDefaultGraphActionRegistrar::register_actions(const Orchestrato
     _register_orchestration_functions();
     _register_orchestration_variables();
     _register_orchestration_signals();
+    _register_orchestration_events();
 }

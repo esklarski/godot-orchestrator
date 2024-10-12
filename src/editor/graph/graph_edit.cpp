@@ -2202,7 +2202,7 @@ void OrchestratorGraphEdit::_on_paste_nodes_request()
     Vector<Ref<OScriptSignal>> signals_to_create;
     for (const Ref<OScriptSignal>& E : _clipboard->signals)
     {
-        if (!orchestration->has_custom_signal(E->get_signal_name()))
+        if ( !orchestration->has_custom_signal(E->get_signal_name()) && !orchestration->has_custom_event(E->get_signal_name()) )
         {
             signals_to_create.push_back(E);
             continue;

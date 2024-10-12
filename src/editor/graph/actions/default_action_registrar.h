@@ -120,6 +120,9 @@ protected:
     /// Registers all orchestration signals
     void _register_orchestration_signals();
 
+    /// Registers all orchestration events
+    void _register_orchestration_events();
+
 public:
     //~ Begin OrchestratorGraphActionRegistrar Interface
     void register_actions(const OrchestratorGraphActionRegistrarContext& p_context) override;

@@ -37,6 +37,7 @@ protected:
     OrchestratorScriptComponentPanel* _macros{ nullptr };     //! Macros section
     OrchestratorScriptComponentPanel* _variables{ nullptr };  //! Variables section
     OrchestratorScriptComponentPanel* _signals{ nullptr };    //! Signals section
+    OrchestratorScriptComponentPanel* _events{ nullptr };    //! Events section
 
     //~ Begin Godot Interface
     void _notification(int p_what);

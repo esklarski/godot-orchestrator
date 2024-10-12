@@ -114,6 +114,7 @@ void OrchestratorGraphActionMenu::_notification(int p_what)
         self->connect("functions_changed", callable_mp(this, &OrchestratorGraphActionMenu::clear));
         self->connect("variables_changed", callable_mp(this, &OrchestratorGraphActionMenu::clear));
         self->connect("signals_changed", callable_mp(this, &OrchestratorGraphActionMenu::clear));
+        self->connect("events_changed", callable_mp(this, &OrchestratorGraphActionMenu::clear));
 
         // When user changes any project settings, this is used to force a refresh for autoloads
         ProjectSettings::get_singleton()->connect("settings_changed", callable_mp(this, &OrchestratorGraphActionMenu::clear));
